@@ -75,8 +75,3 @@ class Chessboard():
         else:
             return None
 
-    def is_check(self):
-        return self.board.is_check()
-
-    def is_draw_by_repetition(self):
-        return self.board.is_fivefold_repetition() or self.board.is_seventyfive_moves()
