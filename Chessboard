@@ -2,34 +2,33 @@ import chess
 import chess.engine
 
 class Chessboard():
-    def __init__(self):
-        # Inicializa um novo tabuleiro de xadrez e um motor de xadrez (Stockfish)
+    def __init__(self, skill_level=20, time_limit=2.0):
         self.board = chess.Board()
         self.engine = chess.engine.SimpleEngine.popen_uci("/usr/games/stockfish")
+        self.engine.configure({"Skill Level": skill_level})
+        self.time_limit = time_limit
 
     def display(self):
-        # Exibe o tabuleiro de xadrez atual no formato SVG
         from IPython.display import display, SVG, HTML
         svg = self.board._repr_svg_()
         svg = svg.replace('<svg width="390" height="390"', '<svg width="290" height="290"')
         display(SVG(svg))
 
-        # Gera e exibe as sugestões dos primeiros 5 movimentos legais
         legal_moves = list(self.board.legal_moves)
         suggestions = "<b>Sugestões de Movimentos:</b><br>"
+
         for move in legal_moves[:5]:
             move_description = self.explain_move(move)
             suggestions += f"{move}: {move_description}<br>"
+
         display(HTML(f"<div style='margin-top: 20px;'>{suggestions}</div>"))
 
     def explain_move(self, move):
-        # Fornece uma descrição textual de um movimento específico
         piece = self.board.piece_at(move.from_square)
         piece_name = self.get_piece_name(piece)
         return f"Mover {piece_name} de {chess.square_name(move.from_square)} para {chess.square_name(move.to_square)}"
 
     def get_piece_name(self, piece):
-        # Retorna o nome em português da peça com base no seu símbolo
         if piece is None:
             return "?"
         names = {
@@ -39,13 +38,19 @@ class Chessboard():
         piece_symbol = piece.symbol().upper()
         return names.get(piece_symbol, "?")
 
+    def play_stockfish_move(self):
+        # Obtém o melhor movimento sugerido pelo Stockfish
+        result = self.engine.play(self.board, chess.engine.Limit(time=self.time_limit))
+        # Executa o movimento no tabuleiro
+        self.board.push(result.move)
+
     def make_move(self, move_str):
-        # Tenta realizar um movimento no tabuleiro e retorna se foi bem-sucedido
         try:
             move = chess.Move.from_uci(move_str)
         except ValueError as e:
             print(f"Erro no movimento: {e}")
             return False
+
         if move in self.board.legal_moves:
             self.board.push(move)
             return True
@@ -54,11 +59,9 @@ class Chessboard():
             return False
 
     def is_game_over(self):
-        # Verifica se o jogo terminou (por xeque-mate, empate, etc.)
         return self.board.is_game_over()
 
     def get_winner(self):
-        # Determina o vencedor do jogo ou se resultou em empate
         if self.board.is_checkmate():
             return f"Vitória para {('Brancas' if self.board.turn == chess.WHITE else 'Pretas')}"
         elif self.board.is_stalemate():
@@ -73,20 +76,7 @@ class Chessboard():
             return None
 
     def is_check(self):
-        # Verifica se o rei do jogador atual está em xeque
         return self.board.is_check()
 
     def is_draw_by_repetition(self):
-        # Verifica se o jogo terminou em empate devido à repetição de posições
         return self.board.is_fivefold_repetition() or self.board.is_seventyfive_moves()
-
-    def get_stockfish_move(self):
-        # Obtém o melhor movimento sugerido pelo motor Stockfish
-        result = self.engine.play(self.board, chess.engine.Limit(time=2.0))
-        return result.move
-
-    def play_stockfish_move(self):
-        # Executa o movimento sugerido pelo Stockfish no tabuleiro
-        stockfish_move = self.get_stockfish_move()
-        self.board.push(stockfish_move)
-
