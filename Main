@@ -1,0 +1,40 @@
+# Este bloco verifica se o script está sendo executado diretamente e não importado como um módulo
+if __name__ == "__main__":
+    # Definição da função principal que contém a lógica do jogo
+    def main():
+        # Cria uma instância do tabuleiro de xadrez
+        chess_board = Chessboard()
+
+        # Pergunta ao usuário se deseja fazer o primeiro movimento
+        jogador_comeca = input("Você deseja começar? (s/n): ").strip().lower() == 's'
+
+        # Loop principal do jogo, que continua até que o jogo termine (xeque-mate, empate, etc.)
+        while not chess_board.is_game_over():
+            # Exibe o estado atual do tabuleiro
+            chess_board.display()
+
+            # Lógica para alternar entre os movimentos do jogador e do Stockfish
+            if jogador_comeca:
+                # Solicita um movimento do jogador
+                jogador_move = input("Faça seu movimento: ")
+                # Tenta executar o movimento e verifica se é válido
+                if not chess_board.make_move(jogador_move):
+                    print("Movimento inválido, tente novamente.")
+                    continue  # Se o movimento for inválido, volta para o início do loop
+            else:
+                # O Stockfish faz um movimento
+                print("Stockfish está fazendo um movimento...")
+                chess_board.play_stockfish_move()
+
+            # Alterna a vez entre o jogador e o Stockfish
+            jogador_comeca = not jogador_comeca
+
+            # Limpa a saída do notebook para manter a visualização limpa
+            from IPython.display import clear_output
+            clear_output(wait=True)
+
+        # Após o término do jogo, exibe o resultado
+        print(chess_board.get_winner())
+
+    # Chama a função principal para iniciar o jogo
+    main()
